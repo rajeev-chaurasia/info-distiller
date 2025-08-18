@@ -1,0 +1,17 @@
+# Fast, modern web framework for building APIs
+fastapi
+
+# Lightning-fast ASGI server, to run our FastAPI application
+uvicorn
+
+# The core MCP library we will use for our agentic tools
+fastmcp
+
+# A fast Python package installer, recommended by the FastMCP docs
+uv
+
+# Google Cloud SDK for Vertex AI
+google-cloud-aiplatform
+
+# Utility to load environment variables from a .env file for local development
+python-dotenv

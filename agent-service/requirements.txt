@@ -15,3 +15,12 @@ google-cloud-aiplatform
 
 # Utility to load environment variables from a .env file for local development
 python-dotenv
+
+# For making HTTP requests to fetch articles
+requests
+
+# For cleanly extracting the main article text from HTML
+readability-lxml
+
+# For parsing HTML and extracting plain text
+beautifulsoup4

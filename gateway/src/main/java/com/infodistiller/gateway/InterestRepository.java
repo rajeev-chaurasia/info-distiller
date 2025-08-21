@@ -1,5 +1,6 @@
 package com.infodistiller.gateway;
 
+import com.infodistiller.gateway.entity.Interest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -7,6 +7,7 @@ import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 public class InfoDistillerGatewayApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(InfoDistillerGatewayApplication.class, args);
     }

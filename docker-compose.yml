@@ -23,7 +23,7 @@ services:
     build: ./gateway
     container_name: info_distiller_gateway
     ports:
-      - "8082:8082" # Changed back to 8080 for consistency, ensure this port is free
+      - "8082:8082"
     depends_on:
       db:
         condition: service_healthy

@@ -1,4 +1,4 @@
-package com.infodistiller.gateway;
+package com.infodistiller.gateway.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

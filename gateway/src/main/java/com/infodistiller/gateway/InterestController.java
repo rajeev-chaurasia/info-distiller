@@ -1,9 +1,11 @@
 package com.infodistiller.gateway;
 
+import com.infodistiller.gateway.dtos.URLRequest;
+import com.infodistiller.gateway.entity.Interest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -14,6 +16,7 @@ public class InterestController {
 
     private final InterestRepository interestRepository;
     private final RestTemplate restTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(InterestController.class);
 
     @Autowired
     public InterestController(InterestRepository interestRepository, RestTemplate restTemplate) {
@@ -28,9 +31,18 @@ public class InterestController {
 
     @GetMapping("/agent-health")
     public String getAgentHealth() {
-        // The URL uses the service name 'agent-service' from docker-compose.yml
         String agentServiceUrl = "http://agent-service:8000/health";
-        // Use the RestTemplate to make a GET request and return the response as a String
         return restTemplate.getForObject(agentServiceUrl, String.class);
+    }
+
+    @PostMapping("/summarize-url")
+    public String summarizeUrl(@RequestBody URLRequest request) {
+        try {
+            String agentServiceUrl = "http://agent-service:8000/api/v1/summarize-url";
+            return restTemplate.postForObject(agentServiceUrl, request, String.class);
+        } catch (Exception e) {
+            logger.error("Error summarizing URL: {}", request.getUrl(), e);
+            throw e;
+        }
     }
 }

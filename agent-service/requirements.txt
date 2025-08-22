@@ -13,6 +13,9 @@ uv
 # Google Cloud SDK for Vertex AI
 google-cloud-aiplatform
 
+# LangChain integration for Vertex AI, used by CrewAI
+langchain-google-vertexai
+
 # Utility to load environment variables from a .env file for local development
 python-dotenv
 
@@ -24,3 +27,7 @@ readability-lxml
 
 # For parsing HTML and extracting plain text
 beautifulsoup4
+
+# For building multi-agent AI systems
+crewai
+crewai[tools]

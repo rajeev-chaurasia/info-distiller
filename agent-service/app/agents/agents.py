@@ -1,12 +1,8 @@
 from crewai import Agent
-from langchain_google_vertexai import VertexAI
 
+from ..config import llm
 # Import the tool we created
-from ..tools.tools import article_scraper_tool
-
-# Initialize the VertexAI model
-# CrewAI uses LangChain wrappers for LLM integrations
-llm = VertexAI(model_name="gemini-2.0-flash-001")
+from ..tools.tools import article_scraper_tool, summarization_tool
 
 # Agent 1: The Research Scout
 # This agent is responsible for finding and scraping information from the web.
@@ -34,6 +30,7 @@ writer = Agent(
         "complex topics into clear, insightful summaries. You transform dense text "
         "into perfectly formatted, bite-sized bullet points."
     ),
+    tools=[summarization_tool],
     llm=llm,
     allow_delegation=False,
     verbose=True

@@ -10,13 +10,13 @@ scrape_task = Task(
     agent=research_scout
 )
 
-# Task 2: Summarize the scraped content
+# Task 2: Summarize the content
 summarize_task = Task(
     description=(
-        "Read the article content you have been provided. Your task is to create a "
-        "concise summary of the key points in 3-5 bullet points."
+        "Use your 'Content Summarizer Tool' to create a concise summary "
+        "of the provided article content in 3-5 bullet points."
     ),
     expected_output="A summary of the article formatted as a bulleted list.",
     agent=writer,
-    context=[scrape_task]
+    context=[scrape_task] # The context is still passed from the first task
 )

@@ -22,12 +22,13 @@ python-dotenv
 # For making HTTP requests to fetch articles
 requests
 
-# For cleanly extracting the main article text from HTML
-readability-lxml
-
-# For parsing HTML and extracting plain text
-beautifulsoup4
-
 # For building multi-agent AI systems
 crewai
 crewai[tools]
+
+# PostgreSQL database driver for Python
+psycopg2-binary
+
+# libraries for robust HTML parsing
+beautifulsoup4
+readability-lxml

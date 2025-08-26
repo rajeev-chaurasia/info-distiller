@@ -31,16 +31,18 @@ services:
   agent-service:
     build: ./agent-service
     container_name: info_distiller_agent_service
+    env_file:
+      - ./agent-service/.env
     ports:
       - "8000:8000"
-    # --- ADD THE FOLLOWING SECTIONS ---
     volumes:
-      # This mounts our local secrets folder into the container at /app/secrets
       - ./secrets:/app/secrets
     environment:
-      # This tells the Google SDK where to find the credentials inside the container
       - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/gcp-credentials.json
-    # --- END OF ADDED SECTIONS ---
+      - DB_HOST=db
+      - DB_NAME=infodistiller
+      - DB_USER=user
+      - DB_PASSWORD=password
     depends_on:
       db:
         condition: service_healthy

@@ -1,43 +1,54 @@
 import requests
-from readability import Document
-from bs4 import BeautifulSoup
-
 from crewai.tools import tool
+from ..config import llm
 
-def _fetch_article_text(url: str) -> str:
-    """
-    Internal function to fetch the content from a URL and extracts the main article text.
+from bs4 import BeautifulSoup
+from readability import Document
 
-    Args:
-        url: The URL of the article to fetch.
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+}
 
-    Returns:
-        The clean, extracted text of the article.
-    """
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        doc = Document(response.text)
-        article_html = doc.summary()
-        soup = BeautifulSoup(article_html, 'html.parser')
-        plain_text = soup.get_text()
-        return plain_text
-    except Exception as e:
-        print(f"Error fetching or parsing URL {url}: {e}")
-        return f"Error: Could not process the article from the URL. {e}"
-
-# Article Scraper Tool
 @tool("Article Scraper Tool")
 def article_scraper_tool(url: str) -> str:
     """
-    A tool that takes a website URL as input, fetches the content,
-    and returns the clean, main article text. Ideal for scraping news articles,
-    blog posts, and other text-heavy webpages.
-
-    Args:
-        url: The URL of the article to fetch.
-
-    Returns:
-        The clean, extracted text of the article.
+    Takes a website URL, fetches the HTML, and uses the readability
+    library to extract the main article text, stripping all HTML tags.
     """
-    return _fetch_article_text(url)
+    print(f"[Scraper Tool] Scraping and cleaning URL: {url}")
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=15)
+        response.raise_for_status()
+
+        # Use readability-lxml to extract the main article content
+        doc = Document(response.text)
+
+        # Use BeautifulSoup to get clean text from the parsed HTML
+        soup = BeautifulSoup(doc.summary(), 'html.parser')
+
+        return soup.get_text(separator='\n', strip=True)
+
+    except requests.exceptions.RequestException as e:
+        return f"Error: Could not fetch the article from URL: {url}. Details: {e}"
+    except Exception as e:
+        return f"Error: An unexpected error occurred while processing the article. Details: {e}"
+
+@tool("Content Summarizer Tool")
+def summarization_tool(text: str) -> str:
+    """
+    Takes a block of text and returns a concise,
+    bullet-point summary of its key points.
+    """
+    # First, check if the input text contains an error message from the scraper
+    if text.strip().startswith("Error:"):
+        return "Could not summarize the article because the content could not be fetched."
+
+    prompt = f"""
+    Summarize the following text in 3-5 clear and concise bullet points.
+    Text:
+    ---
+    {text}
+    ---
+    Summary:
+    """
+    return llm.invoke(prompt)

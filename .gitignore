@@ -1,4 +1,7 @@
 secrets/
 
 **/node_modules
-.env.local
+
+# Ignore environment variable files
+**/.env
+**/.env.local

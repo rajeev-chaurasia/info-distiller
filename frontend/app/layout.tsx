@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import React from "react";
+import Navbar from "@/components/Navbar";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Info-Distiller",
-  description: "AI-powered article summarizer",
+  title: "Info Distiller",
+  description: "Your personal AI briefing generator",
 };
 
 export default function RootLayout({
@@ -14,7 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-slate-900 text-white">{children}</body>
+      <body className={inter.className}>
+        <Navbar />
+        <main>{children}</main>
+      </body>
     </html>
   );
 }

@@ -8,45 +8,104 @@ export interface Interest extends InterestDTO {
     userId: number;
 }
 
-const API_BASE_URL = 'http://localhost:8082/api';
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
+export interface Selection {
+    id: number;
+    userId: number;
+    articleUrl: string;
+    articleTitle: string;
+    summary: string;
+    pickedForDate: string;
+}
 
-// Function to fetch all interests
+const API_BASE_URL = 'http://localhost:8082/api';
+
+// This helper function gets the auth token from localStorage.
+const getAuthHeaders = (): HeadersInit => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        throw new Error('Authentication token not found. Please log in.');
+    }
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+};
+
+// --- AUTHENTICATION API ---
+
+export const generateOtp = async (email: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/auth/generate-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+        throw new Error('Failed to generate OTP');
+    }
+    return response.json();
+};
+
+export const validateOtp = async (email: string, otp: string): Promise<{ token: string }> => {
+    const response = await fetch(`${API_BASE_URL}/auth/validate-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Invalid or expired OTP');
+    }
+    return response.json();
+};
+
+// --- PROTECTED APIs (Require JWT) ---
+
 export const fetchInterests = async (): Promise<Interest[]> => {
     const response = await fetch(`${API_BASE_URL}/interests`, {
-        headers: {'X-API-KEY': API_KEY},
+        headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch interests');
     return response.json();
 };
 
-// Function to create a new interest
 export const createInterest = async (interestData: InterestDTO): Promise<Interest> => {
     const response = await fetch(`${API_BASE_URL}/interests`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json', 'X-API-KEY': API_KEY},
+        headers: getAuthHeaders(),
         body: JSON.stringify(interestData),
     });
     if (!response.ok) throw new Error('Failed to create interest');
     return response.json();
 };
 
-// Function to update existing interest
 export const updateInterest = async (id: number, interestData: InterestDTO): Promise<Interest> => {
     const response = await fetch(`${API_BASE_URL}/interests/${id}`, {
         method: 'PUT',
-        headers: {'Content-Type': 'application/json', 'X-API-KEY': API_KEY},
+        headers: getAuthHeaders(),
         body: JSON.stringify(interestData),
     });
     if (!response.ok) throw new Error('Failed to update interest');
     return response.json();
 };
 
-// Function to delete existing interest
 export const deleteInterest = async (id: number): Promise<void> => {
     const response = await fetch(`${API_BASE_URL}/interests/${id}`, {
         method: 'DELETE',
-        headers: {'X-API-KEY': API_KEY},
+        headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete interest');
+};
+
+export const fetchTodaysBriefing = async (): Promise<Selection[]> => {
+    const response = await fetch(`${API_BASE_URL}/briefing/today`, {
+        headers: getAuthHeaders(),
+    });
+    if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('authToken');
+        throw new Error('Session expired. Please log in again.');
+    }
+    if (!response.ok) {
+        throw new Error('Failed to fetch today\'s briefing');
+    }
+    return response.json();
 };

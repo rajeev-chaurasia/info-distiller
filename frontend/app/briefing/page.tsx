@@ -1,29 +1,63 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchTodaysBriefing, Selection } from '@/services/api';
-import withAuth from '@/components/withAuth'
+import { useRouter } from 'next/navigation';
+import { fetchTodaysBriefing, generateBriefing, Selection } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import axios from 'axios';
 
-function BriefingPage() {
+export default function BriefingPage() {
   const [selections, setSelections] = useState<Selection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationMessage, setGenerationMessage] = useState('');
+
+  const router = useRouter();
+  const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
-    const loadBriefing = async () => {
-      try {
-        const data = await fetchTodaysBriefing();
-        setSelections(data);
-      } catch (err) {
-        setError('Failed to load your briefing. Please run the daily job first.');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+    if (!isAuthLoading) {
+      if (isLoggedIn) {
+        const loadBriefing = async () => {
+          try {
+            const response = await fetchTodaysBriefing();
+            setSelections(response.data);
+          } catch (err) {
+            if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
+              logout();
+            } else {
+              setError('Failed to load briefing.');
+              console.error(err);
+            }
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        loadBriefing();
+      } else {
+        router.push('/login');
       }
-    };
+    }
+  }, [isLoggedIn, isAuthLoading, router, logout]);
 
-    loadBriefing();
-  }, []);
+  const handleGenerateBriefing = async () => {
+    setIsGenerating(true);
+    setError('');
+    setGenerationMessage('');
+    try {
+      const response = await generateBriefing();
+      setGenerationMessage(response.message + " Please check your email for a notification when it's ready, then refresh this page.");
+    } catch (err) {
+      setError('Failed to start the briefing generation process.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  if (isLoading || isAuthLoading) {
+    return <p className="text-center mt-10 text-slate-400">Loading your briefing...</p>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -35,20 +69,19 @@ function BriefingPage() {
       </header>
 
       <main className="space-y-6">
-        {isLoading && <p className="text-slate-400">Loading your briefing...</p>}
         {error && <p className="text-red-400">{error}</p>}
 
-        {!isLoading && !error && selections.length === 0 && (
-          <div className="p-6 bg-slate-800 border border-slate-700 rounded-md">
-            <p className="text-slate-400">
-              Your briefing for today is empty.
-            </p>
-            <p className="text-slate-500 mt-2">
-              You can run the daily job manually by opening a new terminal and running this command from your project's root folder:
-            </p>
-            <code className="block bg-slate-900 p-2 rounded-md text-sm text-slate-300 mt-2">
-              docker compose exec agent-service python -m app.daily_job
-            </code>
+        {!error && selections.length === 0 && (
+          <div className="p-6 bg-slate-800 border border-slate-700 rounded-md text-center">
+            <h2 className="text-2xl font-bold text-slate-300">Your briefing for today is not ready yet.</h2>
+            <button
+              onClick={handleGenerateBriefing}
+              disabled={isGenerating}
+              className="mt-4 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-md disabled:bg-slate-500"
+            >
+              {isGenerating ? 'Processing...' : 'Generate My Briefing Now'}
+            </button>
+            {generationMessage && <p className="mt-4 text-green-400">{generationMessage}</p>}
           </div>
         )}
 
@@ -59,10 +92,9 @@ function BriefingPage() {
                 {selection.articleTitle}
               </a>
             </h2>
-
             <ul className="list-disc list-inside space-y-2 text-slate-300">
               {selection.summary
-                .split('* ')
+                .split(/\*\s+/)
                 .filter(point => point.trim() !== '')
                 .map((point, index) => (
                   <li key={index}>{point.trim()}</li>
@@ -75,5 +107,3 @@ function BriefingPage() {
     </div>
   );
 }
-
-export default withAuth(BriefingPage);

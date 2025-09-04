@@ -10,7 +10,6 @@ def fetch_articles_for_interest(query: str):
     """
     Fetches news articles for a given query from NewsAPI.
     """
-    # ... (this function is correct and does not need changes)
     api_key = os.getenv("NEWS_API_KEY")
     if not api_key:
         print("[Daily Job] Error: NEWS_API_KEY environment variable not set.")
@@ -39,12 +38,12 @@ def fetch_articles_for_interest(query: str):
         return []
 
 
-def run_job():
+def run_job_for_user(user_id: int):
     """
-    Connects to the database, fetches interests, fetches articles, summarizes them,
-    and saves the results back to the database.
+    Runs the full briefing generation process for a single user.
     """
-    conn = None  # Initialize conn to None
+    print(f"[Job] Starting briefing generation for user_id: {user_id}")
+    conn = None
     try:
         conn = psycopg2.connect(
             host=os.getenv("DB_HOST"),
@@ -53,31 +52,24 @@ def run_job():
             password=os.getenv("DB_PASSWORD")
         )
         cur = conn.cursor()
-        print("[Daily Job] Successfully connected to the database.")
 
-        # For now, we are running the job for all users.
-        # In the future, this could be parameterized.
-        cur.execute("SELECT id, query_template FROM interests")
+        cur.execute("SELECT query_template FROM interests WHERE user_id = %s", (user_id,))
         interests = cur.fetchall()
 
-        print(f"[Daily Job] Found {len(interests)} interests to process.")
+        print(f"[Job] Found {len(interests)} interests for user {user_id}.")
         for interest in interests:
-            interest_id = interest[0]
-            query = interest[1]
+            query = interest[0]
             articles = fetch_articles_for_interest(query)
 
-            for article in articles[:3]:
-                print(f"\n--- Processing Article ---")
+            for article in articles[:3]:  # Process top 3 articles per interest
+                print(f"\n--- [Job] Processing Article ---")
                 print(f"  Title: {article['title']}")
-                print(f"  URL: {article['url']}")
 
                 try:
                     summary_result = run_summarization_crew(article['url'])
                     final_summary = summary_result.raw if summary_result and hasattr(summary_result, 'raw') else str(
                         summary_result)
 
-                    # --- SAVE TO DATABASE ---
-                    # Only save if the summary is not an error message
                     if "error" not in final_summary.lower() and "unable to" not in final_summary.lower():
                         insert_query = """
                                        INSERT INTO selections (user_id, article_url, article_title, summary, picked_for_date)
@@ -86,24 +78,28 @@ def run_job():
                                            (user_id, article_url, picked_for_date)
                                            DO NOTHING; \
                                        """
-                        # We'll hardcode user_id to 1 for now
                         cur.execute(insert_query,
-                                    (1, article['url'], article['title'], final_summary, datetime.now().date()))
+                                    (user_id, article['url'], article['title'], final_summary, datetime.now().date()))
                         conn.commit()
-                        print(f"  ✅ Summary saved to database.")
+                        print(f"  ✅ Summary saved to database for user {user_id}.")
                     else:
                         print(f"  ❌ Skipping save for failed summary.")
-
                 except Exception as e:
-                    print(f"  !! Crew failed for this article: {e}")
+                    print(f"  !! Crew failed for article: {article['url']}. Error: {e}")
 
     except Exception as e:
-        print(f"[Daily Job] A critical error occurred in run_job: {e}")
+        print(f"[Job] A critical error occurred for user {user_id}: {e}")
     finally:
         if conn:
-            cur.close()
             conn.close()
 
+    try:
+        print(f"[Job] Notifying gateway that job for user {user_id} is complete.")
+        # The URL must match the service name in docker-compose.yml
+        gateway_url = "http://gateway:8082/api/briefing/notify"
 
-if __name__ == "__main__":
-    run_job()
+        # This endpoint is public, so no token is needed for this simple service-to-service call
+        requests.post(gateway_url, json={"userId": user_id})
+        print(f"[Job] Notification sent successfully for user {user_id}.")
+    except Exception as e:
+        print(f"[Job] CRITICAL: Failed to send completion notification for user {user_id}. Error: {e}")

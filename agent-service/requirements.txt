@@ -32,3 +32,7 @@ psycopg2-binary
 # libraries for robust HTML parsing
 beautifulsoup4
 readability-lxml
+
+# For RabbitMQ communication
+pika
+supervisor

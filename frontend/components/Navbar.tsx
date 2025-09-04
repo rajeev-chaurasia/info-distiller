@@ -1,42 +1,39 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    // Check if the auth token exists in local storage
-    const token = localStorage.getItem('authToken');
-    setIsLoggedIn(!!token);
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    setIsLoggedIn(false);
-    router.push('/login');
-  };
+  const { isLoggedIn, logout } = useAuth();
 
   return (
-    <nav className="bg-slate-800 border-b border-slate-700">
+    <nav className="bg-slate-900/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link href="/frontend/public" className="text-white font-bold text-xl">
+            <Link href="/" className="text-white font-bold text-xl">
               Info-Distiller
             </Link>
           </div>
-          <div>
+          <div className="flex items-center space-x-4">
+            <Link href="/" className="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white">
+              Home
+            </Link>
             {isLoggedIn ? (
-              <button
-                onClick={handleLogout}
-                className="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white"
-              >
-                Logout
-              </button>
+              <>
+                <Link href="/interests" className="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white">
+                  Interests
+                </Link>
+                <Link href="/briefing" className="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white">
+                  Briefing
+                </Link>
+                <button
+                  onClick={logout}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <Link href="/login" className="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white">
                 Login

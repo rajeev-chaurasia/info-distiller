@@ -19,6 +19,16 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: info_distiller_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+
   gateway:
     build: ./gateway
     container_name: info_distiller_gateway
@@ -29,6 +39,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
 
   agent-service:
     build: ./agent-service
@@ -45,9 +57,14 @@ services:
       - DB_NAME=infodistiller
       - DB_USER=user
       - DB_PASSWORD=password
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=user
+      - RABBITMQ_PASS=password
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
 
   frontend:
     build: ./frontend

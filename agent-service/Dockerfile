@@ -14,8 +14,11 @@ RUN uv pip install --system -r requirements.txt
 # Copy the application source code into the container
 COPY ./app ./app
 
+# Copy the supervisord configuration file into the container
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Expose the port the server will run on
 EXPOSE 8000
 
-# The command to run the Uvicorn server when the container starts
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# The command to run supervisord, which will in turn manage our processes
+CMD ["/usr/local/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

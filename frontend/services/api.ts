@@ -1,9 +1,12 @@
+import { api } from '../context/AuthContext';
+
+// --- TYPE DEFINITIONS ---
 export interface InterestDTO {
     name: string;
     queryTemplate: string;
 }
 
-export interface Interest extends InterestDTO {
+export interface Interest extends InterestDTO{
     id: number;
     userId: number;
 }
@@ -17,95 +20,23 @@ export interface Selection {
     pickedForDate: string;
 }
 
-const API_BASE_URL = 'http://localhost:8082/api';
-
-// This helper function gets the auth token from localStorage.
-const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        throw new Error('Authentication token not found. Please log in.');
-    }
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-    };
-};
-
 // --- AUTHENTICATION API ---
+export const generateOtp = (email: string) => api.post('/auth/generate-otp', { email });
+export const validateOtp = (email: string, otp: string) => api.post('/auth/validate-otp', { email, otp });
 
-export const generateOtp = async (email: string): Promise<{ message: string }> => {
-    const response = await fetch(`${API_BASE_URL}/auth/generate-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-    });
-    if (!response.ok) {
-        throw new Error('Failed to generate OTP');
-    }
-    return response.json();
+// --- PROTECTED APIs ---
+export const fetchInterests = () => api.get<Interest[]>('/interests');
+export const createInterest = (interestData: InterestDTO) => api.post<Interest>('/interests', interestData);
+export const updateInterest = (id: number, interestData: InterestDTO) => api.put<Interest>(`/interests/${id}`, interestData);
+export const deleteInterest = (id: number) => api.delete(`/interests/${id}`);
+export const fetchTodaysBriefing = () => api.get<Selection[]>('/briefing/today');
+
+export const generateInterestQuery = async (topic: string): Promise<{ query: string }> => {
+    const response = await api.post('/interests/generate-query', { topic });
+    return response.data;
 };
 
-export const validateOtp = async (email: string, otp: string): Promise<{ token: string }> => {
-    const response = await fetch(`${API_BASE_URL}/auth/validate-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
-    });
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Invalid or expired OTP');
-    }
-    return response.json();
-};
-
-// --- PROTECTED APIs (Require JWT) ---
-
-export const fetchInterests = async (): Promise<Interest[]> => {
-    const response = await fetch(`${API_BASE_URL}/interests`, {
-        headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch interests');
-    return response.json();
-};
-
-export const createInterest = async (interestData: InterestDTO): Promise<Interest> => {
-    const response = await fetch(`${API_BASE_URL}/interests`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(interestData),
-    });
-    if (!response.ok) throw new Error('Failed to create interest');
-    return response.json();
-};
-
-export const updateInterest = async (id: number, interestData: InterestDTO): Promise<Interest> => {
-    const response = await fetch(`${API_BASE_URL}/interests/${id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(interestData),
-    });
-    if (!response.ok) throw new Error('Failed to update interest');
-    return response.json();
-};
-
-export const deleteInterest = async (id: number): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/interests/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to delete interest');
-};
-
-export const fetchTodaysBriefing = async (): Promise<Selection[]> => {
-    const response = await fetch(`${API_BASE_URL}/briefing/today`, {
-        headers: getAuthHeaders(),
-    });
-    if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('authToken');
-        throw new Error('Session expired. Please log in again.');
-    }
-    if (!response.ok) {
-        throw new Error('Failed to fetch today\'s briefing');
-    }
-    return response.json();
+export const generateBriefing = async (): Promise<{ message: string }> => {
+    const response = await api.post('/briefing/generate');
+    return response.data;
 };

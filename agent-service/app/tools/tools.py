@@ -52,3 +52,23 @@ def summarization_tool(text: str) -> str:
     Summary:
     """
     return llm.invoke(prompt)
+
+@tool("Interest Query Generation Tool")
+def interest_query_tool(topic: str) -> str:
+    """
+    Takes a simple user-provided topic (e.g., 'AI Startups') and generates a
+    sophisticated, structured search query for a news API.
+    """
+    prompt = f"""
+    You are an expert news analyst. A user wants to track news about the topic: '{topic}'.
+    Your task is to generate a sophisticated search query string for a news API like NewsAPI.
+    The query should be boolean, using OR operators to include related keywords and quoted phrases for exact matches.
+    Include 3 to 5 highly relevant and diverse terms.
+
+    Example Topic: 'Electric Cars'
+    Example Output: '"electric vehicles" OR "Tesla" OR "EV charging" OR "solid-state batteries"'
+
+    Topic: '{topic}'
+    Output:
+    """
+    return llm.invoke(prompt)

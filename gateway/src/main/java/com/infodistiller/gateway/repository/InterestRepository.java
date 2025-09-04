@@ -8,7 +8,6 @@ import java.util.List;
 
 @Repository
 public interface InterestRepository extends JpaRepository<Interest, Integer> {
-
+    // Find all interests for a specific user ID
     List<Interest> findByUserId(Integer userId);
-
 }

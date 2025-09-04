@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from .models.models import URLRequest
+from .models.models import URLRequest, TopicRequest
 
-from .crew import run_summarization_crew
+from .crew import run_summarization_crew, run_interest_generation_crew
 
 # Create an instance of the FastAPI application
 app = FastAPI(
@@ -28,3 +28,15 @@ async def summarize_url(request: URLRequest):
     final_summary = result.raw if result and hasattr(result, 'raw') else str(result)
 
     return {"summary": final_summary}
+
+@app.post("/generate-interest-query")
+async def generate_interest_query(request: TopicRequest):
+    """
+    Takes a simple topic and uses an AI agent to generate a sophisticated search query.
+    """
+    try:
+        result = run_interest_generation_crew(request.topic)
+        # The raw output of the crew is the query string itself
+        return {"query": result.raw}
+    except Exception as e:
+        return {"error": str(e)}

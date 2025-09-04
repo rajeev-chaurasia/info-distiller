@@ -19,6 +19,19 @@ public class BriefingService {
 
     public List<Selection> getTodaysBriefing(Integer userId) {
         LocalDate today = LocalDate.now();
-        return selectionRepository.findByUserIdAndPickedForDate(userId, today);
+        LocalDate yesterday = today.minusDays(1);
+
+        List<LocalDate> dateRange = List.of(today, yesterday);
+
+        List<Selection> selections = selectionRepository.findByUserIdAndDateRange(userId, dateRange);
+
+        if (selections.isEmpty()) {
+            return selections;
+        }
+
+        LocalDate mostRecentDate = selections.get(0).getPickedForDate();
+        return selections.stream()
+                .filter(s -> s.getPickedForDate().equals(mostRecentDate))
+                .toList();
     }
 }

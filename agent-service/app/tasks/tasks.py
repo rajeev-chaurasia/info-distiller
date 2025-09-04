@@ -1,5 +1,5 @@
 from crewai import Task
-from ..agents.agents import research_scout, writer
+from ..agents.agents import research_scout, writer, interest_analyst
 
 # Task 1: Scrape the article content
 scrape_task = Task(
@@ -19,4 +19,11 @@ summarize_task = Task(
     expected_output="A summary of the article formatted as a bulleted list.",
     agent=writer,
     context=[scrape_task] # The context is still passed from the first task
+)
+
+# Task 3: Generate a news API search query from a user topic
+generate_query_task = Task(
+    description="Generate a news API search query for the user's topic: {topic}",
+    expected_output="A single string containing the boolean search query.",
+    agent=interest_analyst
 )

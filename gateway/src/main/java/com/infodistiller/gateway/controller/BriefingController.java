@@ -33,11 +33,10 @@ public class BriefingController {
     }
 
     @GetMapping("/today")
-    public ResponseEntity<List<Selection>> getTodaysBriefing(Principal principal) {
-        String userEmail = principal.getName();
-        User user = authService.findUserByEmail(userEmail);
-        List<Selection> selections = briefingService.getTodaysBriefing(user.getId());
-        return ResponseEntity.ok(selections);
+    public ResponseEntity<Map<String, List<Selection>>> getTodaysBriefing(Principal principal) {
+        User user = authService.findUserByEmail(principal.getName());
+        Map<String, List<Selection>> groupedSelections = briefingService.getTodaysBriefing(user.getId());
+        return ResponseEntity.ok(groupedSelections);
     }
 
     @PostMapping("/generate")

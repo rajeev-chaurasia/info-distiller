@@ -53,11 +53,12 @@ def run_job_for_user(user_id: int):
         )
         cur = conn.cursor()
 
-        cur.execute("SELECT query_template FROM interests WHERE user_id = %s", (user_id,))
+        cur.execute("SELECT id, query_template FROM interests WHERE user_id = %s", (user_id,))
         interests = cur.fetchall()
 
         print(f"[Job] Found {len(interests)} interests for user {user_id}.")
         for interest in interests:
+            interest_id = interest[0]
             query = interest[0]
             articles = fetch_articles_for_interest(query)
 
@@ -72,14 +73,13 @@ def run_job_for_user(user_id: int):
 
                     if "error" not in final_summary.lower() and "unable to" not in final_summary.lower():
                         insert_query = """
-                                       INSERT INTO selections (user_id, article_url, article_title, summary, picked_for_date)
-                                       VALUES (%s, %s, %s, %s, %s)
-                                       ON CONFLICT
-                                           (user_id, article_url, picked_for_date)
-                                           DO NOTHING; \
+                                       INSERT INTO selections (user_id, interest_id, article_url, article_title, summary, picked_for_date)
+                                       VALUES (%s, %s, %s, %s, %s, %s)
+                                       ON CONFLICT (user_id, article_url, picked_for_date) DO NOTHING;
                                        """
                         cur.execute(insert_query,
-                                    (user_id, article['url'], article['title'], final_summary, datetime.now().date()))
+                                    (user_id, interest_id, article['url'], article['title'], final_summary,
+                                     datetime.now().date()))
                         conn.commit()
                         print(f"  ✅ Summary saved to database for user {user_id}.")
                     else:

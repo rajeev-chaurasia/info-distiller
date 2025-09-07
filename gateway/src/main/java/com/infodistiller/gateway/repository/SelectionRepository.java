@@ -12,6 +12,6 @@ import java.util.List;
 @Repository
 public interface SelectionRepository extends JpaRepository<Selection, Integer> {
 
-    @Query("SELECT s FROM Selection s WHERE s.userId = :userId AND s.pickedForDate IN :dates ORDER BY s.pickedForDate DESC")
-    List<Selection> findByUserIdAndDateRange(@Param("userId") Integer userId, @Param("dates") List<LocalDate> dates);
+    @Query("SELECT s, i.name FROM Selection s JOIN Interest i ON s.userId = i.userId WHERE s.userId = :userId AND s.pickedForDate IN :dates ORDER BY s.pickedForDate DESC, i.name ASC")
+    List<Object[]> findSelectionsWithInterestNameByDateRange(@Param("userId") Integer userId, @Param("dates") List<LocalDate> dates);
 }

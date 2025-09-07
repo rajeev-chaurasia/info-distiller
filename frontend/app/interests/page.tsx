@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchInterests, createInterest, updateInterest, deleteInterest, Interest, InterestDTO, generateInterestQuery } from '@/services/api';
+import { fetchInterests, createInterest, deleteInterest, Interest, InterestDTO, generateInterestQuery } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -9,9 +9,9 @@ import axios from 'axios';
 export default function InterestsPage() {
   const [interests, setInterests] = useState<Interest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false); // For form submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [topicName, setTopicName] = useState(''); // Only one input field now
+  const [topicName, setTopicName] = useState('');
 
   const { isLoggedIn, isLoading: isAuthLoading, logout } = useAuth();
   const router = useRouter();
@@ -63,7 +63,7 @@ export default function InterestsPage() {
       // Step 1: Call the AI to generate a query from the simple topic
       console.log(`Generating query for topic: ${topicName}`);
       const queryResponse = await generateInterestQuery(topicName);
-      const generatedQuery = queryResponse.query;
+      const generatedQuery = queryResponse.data.query;
       console.log(`AI Generated Query: ${generatedQuery}`);
 
       // Step 2: Create the new interest object with the generated query

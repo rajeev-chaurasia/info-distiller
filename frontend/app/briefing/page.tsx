@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 
 export default function BriefingPage() {
-  const [selections, setSelections] = useState<Selection[]>([]);
+  const [groupedSelections, setGroupedSelections] = useState<Record<string, Selection[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -22,13 +22,12 @@ export default function BriefingPage() {
         const loadBriefing = async () => {
           try {
             const response = await fetchTodaysBriefing();
-            setSelections(response.data);
+            setGroupedSelections(response.data);
           } catch (err) {
             if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
               logout();
             } else {
               setError('Failed to load briefing.');
-              console.error(err);
             }
           } finally {
             setIsLoading(false);
@@ -42,17 +41,17 @@ export default function BriefingPage() {
   }, [isLoggedIn, isAuthLoading, router, logout]);
 
   const handleGenerateBriefing = async () => {
-    setIsGenerating(true);
-    setError('');
-    setGenerationMessage('');
-    try {
-      const response = await generateBriefing();
-      setGenerationMessage(response.message + " Please check your email for a notification when it's ready, then refresh this page.");
-    } catch (err) {
-      setError('Failed to start the briefing generation process.');
-    } finally {
-      setIsGenerating(false);
-    }
+      setIsGenerating(true);
+      setError('');
+      setGenerationMessage('');
+      try {
+          const response = await generateBriefing();
+          setGenerationMessage(response.data.message + " Please check your email for a notification, then refresh this page.");
+      } catch (err) {
+          setError('Failed to start the briefing generation process.');
+      } finally {
+          setIsGenerating(false);
+      }
   };
 
   if (isLoading || isAuthLoading) {
@@ -68,10 +67,41 @@ export default function BriefingPage() {
         </p>
       </header>
 
-      <main className="space-y-6">
+      <main className="space-y-8">
         {error && <p className="text-red-400">{error}</p>}
 
-        {!error && selections.length === 0 && (
+        {/* --- NEW RENDERING LOGIC --- */}
+
+        {Object.keys(groupedSelections).length > 0 ? (
+          // If we have data, map over the interest names (the keys of the object)
+          Object.keys(groupedSelections).map(interestName => (
+            <section key={interestName} className="p-6 bg-slate-800 border border-slate-700 rounded-md">
+              <h2 className="text-3xl font-bold text-slate-300 mb-4 capitalize">{interestName}</h2>
+              <div className="space-y-6">
+                {/* For each interest, map over its list of articles */}
+                {groupedSelections[interestName].map(selection => (
+                  <div key={selection.id} className="border-t border-slate-700 pt-4 first:pt-0 first:border-t-0">
+                    <h3 className="text-xl font-semibold text-blue-400">
+                      <a href={selection.articleUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {selection.articleTitle}
+                      </a>
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-slate-300 mt-2">
+                      {selection.summary
+                        .split(/\*\s+/)
+                        .filter(point => point.trim() !== '')
+                        .map((point, index) => (
+                          <li key={index}>{point.trim()}</li>
+                        ))
+                      }
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))
+        ) : (
+          // If there's no data, show the "Generate" button
           <div className="p-6 bg-slate-800 border border-slate-700 rounded-md text-center">
             <h2 className="text-2xl font-bold text-slate-300">Your briefing for today is not ready yet.</h2>
             <button
@@ -85,24 +115,6 @@ export default function BriefingPage() {
           </div>
         )}
 
-        {selections.map((selection) => (
-          <div key={selection.id} className="p-6 bg-slate-800 border border-slate-700 rounded-md">
-            <h2 className="text-2xl font-bold mb-4 text-blue-400">
-              <a href={selection.articleUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                {selection.articleTitle}
-              </a>
-            </h2>
-            <ul className="list-disc list-inside space-y-2 text-slate-300">
-              {selection.summary
-                .split(/\*\s+/)
-                .filter(point => point.trim() !== '')
-                .map((point, index) => (
-                  <li key={index}>{point.trim()}</li>
-                ))
-              }
-            </ul>
-          </div>
-        ))}
       </main>
     </div>
   );

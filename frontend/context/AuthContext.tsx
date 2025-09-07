@@ -1,11 +1,7 @@
 'use client';
 
 import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
-import axios from 'axios';
-
-export const api = axios.create({
-    baseURL: 'http://localhost:8082/api'
-});
+import { api } from '@/services/api';
 
 interface AuthContextType {
     isLoggedIn: boolean;
@@ -39,7 +35,9 @@ export const AuthProvider = ({children}: { children: ReactNode }) => {
         localStorage.removeItem('authToken');
         delete api.defaults.headers.common['Authorization'];
         setIsLoggedIn(false);
-        window.location.href = '/login';
+        if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+        }
     };
 
     return (

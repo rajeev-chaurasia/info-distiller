@@ -29,6 +29,7 @@ CREATE TABLE interests (
 CREATE TABLE selections (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    interest_id INTEGER NOT NULL REFERENCES interests(id) ON DELETE CASCADE,
     article_url VARCHAR(1024) NOT NULL,
     article_title VARCHAR(1024),
     summary TEXT,
